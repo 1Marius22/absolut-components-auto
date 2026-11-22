@@ -1,36 +1,73 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Package } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { formatDate, formatPrice } from "../lib/format";
 
 export default function Orders() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [result, setResult] = useState({
+    userId: null,
+    orders: [],
+    loading: true,
+    error: "",
+  });
+
   useEffect(() => {
     let active = true;
-    supabase
-      .from("orders")
-      .select("id,created_at,status,total_amount,shipping_name")
-      .order("created_at", { ascending: false })
-      .then(({ data, error: e }) => {
-        if (active) {
-          setOrders(data || []);
-          setError(e?.message || "");
-          setLoading(false);
-        }
-      })
-      .catch((e) => {
-        if (active) {
-          setError(e.message);
-          setLoading(false);
-        }
+    setResult({ userId, orders: [], loading: true, error: "" });
+
+    if (!userId || !supabase) {
+      setResult({
+        userId,
+        orders: [],
+        loading: false,
+        error: "Nu există o sesiune de autentificare activă.",
       });
+      return () => {
+        active = false;
+      };
+    }
+
+    async function loadOrders() {
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("id,created_at,status,total_amount,shipping_name")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+
+        if (!active) return;
+        setResult({
+          userId,
+          orders: error ? [] : (data ?? []),
+          loading: false,
+          error: error?.message ?? "",
+        });
+      } catch (error) {
+        if (active)
+          setResult({
+            userId,
+            orders: [],
+            loading: false,
+            error: error.message,
+          });
+      }
+    }
+
+    loadOrders();
     return () => {
       active = false;
     };
-  }, []);
+  }, [userId]);
+
+  // Nu afișăm rezultate rămase de la o sesiune anterioară.
+  const loading = result.userId !== userId || result.loading;
+  const orders = result.userId === userId ? result.orders : [];
+  const error = result.userId === userId ? result.error : "";
+
   return (
     <div className="container orders-page">
       <div className="page-heading">
@@ -55,20 +92,24 @@ export default function Orders() {
         </div>
       ) : (
         <div className="orders-list">
-          {orders.map((o) => (
-            <Link to={`/orders/${o.id}`} className="order-row" key={o.id}>
+          {orders.map((order) => (
+            <Link
+              to={`/orders/${order.id}`}
+              className="order-row"
+              key={order.id}
+            >
               <span className="order-icon">
                 <Package size={23} />
               </span>
               <div>
-                <strong>Comanda #{o.id.slice(0, 8).toUpperCase()}</strong>
+                <strong>Comanda #{order.id.slice(0, 8).toUpperCase()}</strong>
                 <p>
-                  {formatDate(o.created_at)} · {o.shipping_name}
+                  {formatDate(order.created_at)} · {order.shipping_name}
                 </p>
               </div>
-              <span className="order-status">{o.status}</span>
+              <span className="order-status">{order.status}</span>
               <strong className="order-price">
-                {formatPrice(o.total_amount)}
+                {formatPrice(order.total_amount)}
               </strong>
               <ArrowRight size={18} />
             </Link>

@@ -1,47 +1,83 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Package, MapPin } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { formatDate, formatPrice } from "../lib/format";
 
 export default function OrderDetails() {
   const { id } = useParams();
   const location = useLocation();
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { user } = useAuth();
+  const userId = user?.id;
+  const currentKey = `${userId ?? ""}:${id ?? ""}`;
+  const [result, setResult] = useState({
+    key: "",
+    order: null,
+    loading: true,
+    error: "",
+  });
+
   useEffect(() => {
     let active = true;
-    supabase
-      .from("orders")
-      .select(
-        "id,created_at,status,total_amount,shipping_name,phone,city,address,postal_code,order_items(product_name,quantity,unit_price,line_total)",
-      )
-      .eq("id", id)
-      .maybeSingle()
-      .then(({ data, error: e }) => {
-        if (active) {
-          setOrder(data);
-          setError(e?.message || "");
-          setLoading(false);
-        }
-      })
-      .catch((e) => {
-        if (active) {
-          setError(e.message);
-          setLoading(false);
-        }
+    setResult({ key: currentKey, order: null, loading: true, error: "" });
+
+    if (!userId || !id || !supabase) {
+      setResult({
+        key: currentKey,
+        order: null,
+        loading: false,
+        error: "Sesiune sau comandă invalidă.",
       });
+      return () => {
+        active = false;
+      };
+    }
+
+    async function loadOrder() {
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select(
+            "id,created_at,status,total_amount,shipping_name,phone,city,address,postal_code,order_items(product_name,quantity,unit_price,line_total)",
+          )
+          .eq("id", id)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (active)
+          setResult({
+            key: currentKey,
+            order: error ? null : data,
+            loading: false,
+            error: error?.message ?? "",
+          });
+      } catch (error) {
+        if (active)
+          setResult({
+            key: currentKey,
+            order: null,
+            loading: false,
+            error: error.message,
+          });
+      }
+    }
+
+    loadOrder();
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, userId, currentKey]);
+
+  const loading = result.key !== currentKey || result.loading;
+  const order = result.key === currentKey ? result.order : null;
+  const error = result.key === currentKey ? result.error : "";
+
   return (
     <div className="container order-details">
       <Link to="/orders" className="back-link">
         <ArrowLeft size={17} /> Toate comenzile
       </Link>
-      {location.state?.newOrder && (
+      {location.state?.newOrder && !loading && order && (
         <p className="form-success success-banner">
           <CheckCircle2 size={20} /> Comanda demonstrativă a fost salvată în
           Supabase!
