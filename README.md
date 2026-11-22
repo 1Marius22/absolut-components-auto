@@ -1,125 +1,74 @@
-# Absolut Components — magazin online de piese auto 🚗
+# 🚗 Absolut Components — Magazin online de piese auto
 
-Proiect educațional **eCommerce Front-End** realizat cu **React + Vite + Supabase**. Site-ul este un MVP demonstrativ, nu un magazin care efectuează plăți sau livrări reale.
+**Absolut Components** este proiectul meu eCommerce realizat în cadrul cursului de Front-End Development.
 
-## Funcționalități
+Am vrut să construiesc un magazin online de piese auto care să fie ușor de folosit și să semene cât mai mult cu un site real, nu doar cu o pagină de prezentare.
 
-- Pagină principală cu categorii auto (filtre, frânare, suspensie, motor, uleiuri)
-- Catalog încărcat **din Supabase**, cu căutare, filtrare și sortare
-- Pagină de detalii pentru fiecare produs, cu preț, stoc și cod SKU
-- Coș de cumpărături cu cantități și totaluri în RON (salvat local în browser)
-- **Supabase Authentication**: înregistrare, login, logout, sesiune persistentă
-- Checkout demonstrativ cu plată ramburs **simulată** (fără card bancar)
-- Salvarea comenzilor în `orders` / `order_items` prin funcția sigură `place_order`
-- Istoricul și detaliile comenzilor, vizibile doar utilizatorului autentificat
-- Interfață adaptată la desktop și mobil; rutare cu React Router
-- Protejarea datelor cu **Row Level Security (RLS)**
+Proiectul a pornit de la o temă de magazin online cu produse vestimentare. Pe parcurs l-am transformat într-un magazin dedicat pieselor și consumabilelor auto, cu propriile categorii, imagini, pagini de produs și un flux complet de comandă demonstrativă.
 
-## Tehnologii
+## 🛒 Ce poți face pe site
 
-React, Vite, JavaScript, CSS, React Router, Supabase JS, PostgreSQL, Supabase Auth, Git / GitHub și Vercel.
+- Să răsfoiești catalogul de piese auto: filtre, frâne, suspensie, componente de motor și uleiuri.
+- Să cauți produse după nume, cod sau producător și să le filtrezi pe categorii.
+- Să sortezi produsele după preț sau nume.
+- Să deschizi pagina unui produs pentru detalii, preț și disponibilitate.
+- Să adaugi produse în coș, să schimbi cantitățile sau să le elimini.
+- Să îți creezi un cont, să te autentifici și să te deconectezi.
+- Să plasezi o **comandă demonstrativă** și să vezi comenzile tale în istoric.
+- Să citești pagina **„Despre noi”**, unde am prezentat ideea magazinului și echipa proiectului.
 
-## 1. Instalare locală
+Coșul este păstrat local în browser, iar produsele, conturile și comenzile sunt gestionate prin **Supabase**. Am folosit și reguli de acces în baza de date, astfel încât fiecare utilizator să își poată vedea propriile comenzi.
 
-Ai nevoie de Node.js modern și npm.
+## 🛠️ Tehnologii folosite
 
-```bash
-npm install
-```
+- **React și JavaScript** — interfața și funcționalitățile aplicației
+- **Vite** — pornirea și construirea proiectului
+- **React Router** — navigarea între pagini
+- **CSS** — designul responsive pentru desktop și telefon
+- **Supabase (PostgreSQL + Auth)** — produse, autentificare și comenzi
+- **Git și GitHub** — organizarea și salvarea codului
 
-Copiază `.env.example` într-un fișier `.env` la rădăcina proiectului:
+## 💻 Cum pornești proiectul local
 
-```env
-VITE_SUPABASE_URL=https://PROIECTUL_TAU.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=CHEIA_TA_PUBLICABILA
-```
+Ai nevoie de Node.js și npm.
 
-În Supabase Dashboard, găsești URL-ul și cheia publicabilă în **Project Settings → API Keys** (denumirile pot diferi ușor). Poți folosi cheia publicabilă nouă (`sb_publishable_...`) sau cheia legacy `anon`; **NU** folosi `service_role` / `secret key` în React sau Vercel.
+1. Clonează repository-ul și deschide folderul în VS Code.
+2. Instalează dependențele folosind comanda `npm install`.
+3. Creează un fișier `.env` în folderul principal, după modelul `.env.example`.
 
-> `.env` este ignorat de Git. Nu încărca parole, chei secrete sau date reale de clienți în repository.
+   ```env
+   VITE_SUPABASE_URL=https://PROIECTUL_TAU.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=CHEIA_PUBLICABILA
+   ```
 
-## 2. Creează baza de date Supabase
+4. Configurează baza de date Supabase folosind scriptul din `supabase/schema.sql` într-un proiect nou și verifică tabelele `products`, `orders` și `order_items`.
+5. Pornește aplicația folosind `npm run dev`.
 
-1. Deschide [Supabase Dashboard](https://supabase.com/dashboard) și creează un proiect nou.
-2. Mergi la **SQL Editor → New query**.
-3. Copiază conținutul fișierului **[`supabase/schema.sql`](supabase/schema.sql)** și rulează-l o singură dată (`Run`). Scriptul este conceput pentru un proiect nou, gol.
-4. În **Table Editor** verifică tabelele `products` (12 produse demo), `orders`, `order_items`.
-5. În **Authentication → Providers → Email** verifică opțiunea de confirmare a adresei de e-mail. Dacă este activă, utilizatorul trebuie să confirme e-mailul înainte de login.
-6. În **Authentication → URL Configuration** configurează Site URL și Redirect URLs pentru adresa locală (`http://localhost:5173`) și domeniul tău Vercel (`https://numele-tau.vercel.app`). Dacă ai mai multe adrese de preview, adaugă-le explicit acolo.
+Poți verifica și versiunea de producție cu `npm run build`.
 
-**Important:** Produsele sunt rânduri reale în Supabase. Scriptul conține **prețuri și stocuri demonstrative**, nu oferte comerciale reale. Toate imaginile auto sunt în `public/images`.
+**Important:** Fișierul `.env` nu trebuie urcat pe GitHub. În frontend se folosește doar cheia publicabilă Supabase, niciodată cheia secretă sau `service_role`.
 
-### Securitate
+## 📁 Cum este organizat proiectul
 
-- `products` — publicul poate citi doar produse active; niciun client nu poate edita stocul sau prețul.
-- `orders` și `order_items` — numai utilizatorul autentificat poate **citi propriile** înregistrări.
-- Comenzile pot fi create doar prin funcția `place_order` (RPC), care verifică utilizatorul, cantitățile, prețurile și stocul pe server; stocul este scăzut atomic.
-- Nu există flux de plăți reale și nu se colectează date de card.
-- Folosește **date fictive** în formularul de comandă în scop demonstrativ.
+- `src/pages` — paginile principale: Home, Shop, Product Details, Login, Register, Checkout, Orders și Despre noi
+- `src/components` — componente reutilizabile, cum ar fi Header, Footer, cardurile de produs și coșul
+- `src/context` — gestionarea autentificării și a coșului
+- `src/lib` — conexiunea cu Supabase și funcțiile de formatare
+- `public/images` — imaginile produselor auto
+- `supabase` — scriptul SQL pentru baza de date
 
-## 3. Pornire
+## 📚 Ce am învățat lucrând la el
 
-```bash
-npm run dev
-```
+Pentru mine, una dintre cele mai interesante părți a fost momentul în care am trecut de la produse și pagini de test la date încărcate dintr-o bază de date reală.
 
-Deschide adresa afișată de Vite, de obicei [http://localhost:5173](http://localhost:5173).
+Am înțeles mai bine cum se leagă componentele React între ele, cum se păstrează informațiile din coș și cum funcționează autentificarea.
 
-Verifică buildul:
+Integrarea cu Supabase și salvarea comenzilor au fost și printre cele mai dificile etape, dar tocmai acolo am învățat cel mai mult.
 
-```bash
-npm run build
-```
+Am folosit și ChatGPT ca ajutor pentru explicații, idei și depanarea erorilor, apoi am adaptat și testat modificările în proiect.
 
-## 4. Publicare pe GitHub și Vercel
+Pe viitor mi-ar plăcea să adaug mai multe produse, filtre după marca și modelul mașinii, o listă de favorite și o zonă de administrare a catalogului.
 
-În folderul proiectului:
+---
 
-```bash
-git init
-git add .
-git commit -m "Absolut Components auto eCommerce with Supabase"
-git branch -M main
-git remote add origin https://github.com/USERNAME/REPOSITORY.git
-git push -u origin main
-```
-
-Dacă repository-ul este deja creat și conectat, **nu repeta** `git init` sau `git remote add`; folosește `git add .`, `git commit ...`, `git push`.
-
-Pe [Vercel](https://vercel.com): **Add New → Project → Import Git Repository**. Pentru Vite folosește `npm run build` și directorul `dist`. În **Project Settings → Environment Variables**, adaugă exact cele două chei `VITE_SUPABASE_URL` și `VITE_SUPABASE_PUBLISHABLE_KEY`, apoi redeploy.
-
-`vercel.json` este deja configurat pentru navigarea directă pe rute ca `/products/ID` și `/orders/ID` fără 404.
-
-## 5. Teste manuale după conectare
-
-- [ ] În catalog apar cele 12 produse din tabelul Supabase.
-- [ ] Căutarea, categoriile și sortarea funcționează.
-- [ ] Detaliile produselor și imaginile se deschid.
-- [ ] Coșul permite adăugarea, schimbarea cantității și ștergerea.
-- [ ] Register funcționează, iar confirmarea e-mailului se face conform setărilor Supabase.
-- [ ] Login și Logout funcționează.
-- [ ] Checkout redirecționează la Login dacă utilizatorul nu este conectat.
-- [ ] Cu un cont autentificat, comanda demo apare în `orders` și `order_items` în Supabase.
-- [ ] Totalul este calculat de server, iar stocul scade după comandă.
-- [ ] Un al doilea cont nu poate vedea comenzile primului.
-- [ ] Nu există erori în consola browserului la funcționalitățile testate.
-- [ ] Rutele directe funcționează și după publicarea pe Vercel.
-
-## Structură
-
-```text
-public/images/         Fotografii cu piese auto (din proiectul original)
-src/components/       Header, Footer, Cart, ProductCard, ProtectedRoute
-src/context/          AuthContext (Supabase) și CartContext
-src/lib/              Client Supabase, formatare preț/data
-src/pages/            Home, Shop, ProductDetails, Login, Register,
-                      Checkout, Orders, OrderDetails, AboutUs
-src/styles.css        Design responsive
-supabase/schema.sql   Tabele, date inițiale, RLS și funcție de comandă
-vercel.json           Fallback SPA pentru React Router
-.env.example          Model pentru variabilele de mediu
-```
-
-## Notă despre proiect
-
-Acest proiect a fost adaptat dintr-o temă eCommerce de curs. Datele din API-ul educațional folosit inițial și imaginile vestimentare au fost eliminate. Autentificarea și comenzile sunt concepute pentru Supabase, iar catalogul se bazează pe datele din PostgreSQL. Conexiunea devine funcțională după ce proprietarul proiectului creează baza de date și introduce variabilele `.env`.
+**Notă:** Absolut Components este un proiect educațional. Produsele, prețurile, datele de contact și comenzile au rol demonstrativ. Nu se fac plăți online sau livrări reale.
